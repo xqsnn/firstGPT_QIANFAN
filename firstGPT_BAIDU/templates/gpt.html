@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>myFirstGPT</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .navbar {
+            background-color: #333;
+            color: white;
+            padding: 7px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            overflow: auto;
+            height: 100%;
+            flex: 1;
+        }
+        .left-column, .right-column {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .left-column {
+            background-color: #f4f4f4;
+            width: 15%;
+        }
+        .right-column {
+            background-color: #fff;
+            width: 85%;
+        }
+        @media (max-width: 800px) {
+            .left-column, .right-column {
+                width: 100%;
+                padding: 10px;
+            }
+            .container {
+                flex-direction: column;
+            }
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 90%;
+            height: 100%;
+            margin-left: 3%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .user-message {
+            background-color: #e1ffc7;
+            align-self: flex-end;
+        }
+        .assistant-message {
+            background-color: #f1f1f1;
+            align-self: flex-start;
+        }
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .chat-input button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .chat-input button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 600px) {
+            .chat-container {
+                width: 100%;
+                height: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>myFirstGPT</h1>
+    </div>
+    
+    
+    <div class="container">
+        <div class="left-column">
+            <div style="margin-bottom: 3%">
+                请选择使用的模型:
+            </div>
+            <select  id="model">
+                <option value="ERNIE-4.0-8K">ERNIE-4.0-8K</option>
+                <option value="ERNIE-3.5-8K">ERNIE-3.5-8K</option>
+                <option value="ERNIE-Speed-128K">ERNIE-Speed-128K</option>
+                <option value="ERNIE Speed-AppBuilder">ERNIE Speed-AppBuilder</option>
+                <option value="ERNIE-Character-8K">ERNIE-Character-8K</option>
+                <option value="ERNIE-Functions-8K">ERNIE-Functions-8K</option>
+                <option value="ERNIE-Lite-8K">ERNIE-Lite-8K</option>
+                <option value="Qianfan-Chinese-Llama-2-7B">Qianfan-Chinese-Llama-2-7B</option>
+            </select>
+        </div>
+        
+        <div class="right-column">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input">
+                    <input type="text" id="user-input" placeholder="输入消息..." onkeypress="checkEnter(event)">
+                    <button onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const chatMessages = document.getElementById('chat-messages');
+
+            if (userInput.value.trim() !== '') {
+                // 添加用户消息
+                var userMesg = userInput.value
+                const userMessage = document.createElement('div');
+                userMessage.className = 'chat-message user-message';
+                userMessage.textContent ="你：" + userMesg;
+                chatMessages.appendChild(userMessage);
+
+                // 模拟助手响应
+                
+                var csrfToken = "{{ csrf_token }}";
+                var model = document.getElementById("model");
+                var modelName = model.options[model.selectedIndex].value;
+                
+                $.ajax({
+                    url: "/gpt/",
+                    type: "POST",  // 使用POST方法发送数据
+                    data: {
+                        'userMesg': userMesg,
+                        'modelName': modelName,
+                        'csrfmiddlewaretoken': csrfToken
+                    },
+                    dataType: "json",
+                    success: function (response){
+                        var result = response.result;
+                        const assistantMessage = document.createElement('div');
+                        assistantMessage.className = 'chat-message assistant-message';
+                        assistantMessage.textContent = 'BOT：' + result;
+                        chatMessages.appendChild(assistantMessage);
+        
+                        // 清空输入框
+                        userInput.value = '';
+        
+                        // 滚动到最新消息
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                    
+                });
+
+                
+            }
+        }
+        function checkEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</body>
+</html>
